@@ -6,6 +6,7 @@ import com.example.notification.dto.NotificationType;
 import com.example.notification.entity.Notification;
 import com.example.notification.exception.NotificationNotFoundException;
 import com.example.notification.repository.NotificationRepository;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class NotificationService {
 
     private static final Pattern EMAIL =
             Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
     private static final Pattern PHONE =
             Pattern.compile("^\\+[1-9]\\d{7,14}$");
 
@@ -29,22 +31,24 @@ public class NotificationService {
     public NotificationService(
             NotificationRepository repository,
             NotificationDispatcher dispatcher) {
+
         this.repository = repository;
         this.dispatcher = dispatcher;
     }
 
-    public Notification create(NotificationRequest request) {
+    public Notification create(NotificationRequest request, String username) {
 
-        validateRecipient(request.type(), request.to());
+        validateRecipient(request.type(), request.recipient());
 
         Notification notification = new Notification();
 
         notification.setType(request.type());
-        notification.setRecipient(request.to());
+        notification.setRecipient(request.recipient());
         notification.setSubject(request.subject());
         notification.setMessage(request.message());
         notification.setStatus(NotificationStatus.PENDING);
         notification.setCreatedAt(LocalDateTime.now());
+        notification.setCreatedBy(username);
 
         Notification saved = repository.save(notification);
 
@@ -54,9 +58,11 @@ public class NotificationService {
     }
 
     private void validateRecipient(NotificationType type, String to) {
+
         if (type == NotificationType.EMAIL && !EMAIL.matcher(to).matches()) {
             throw new IllegalArgumentException("Invalid email address: " + to);
         }
+
         if (type == NotificationType.SMS && !PHONE.matcher(to).matches()) {
             throw new IllegalArgumentException(
                     "Invalid phone number. Use international format, e.g. +8801XXXXXXXXX");
@@ -67,7 +73,9 @@ public class NotificationService {
         return repository.findAll(pageable);
     }
 
-    public Page<Notification> getByStatus(NotificationStatus status, Pageable pageable) {
+    public Page<Notification> getByStatus(
+            NotificationStatus status, Pageable pageable) {
+
         return repository.findByStatus(status, pageable);
     }
 
@@ -77,6 +85,7 @@ public class NotificationService {
     }
 
     public Notification resend(Long id) {
+
         Notification notification = getById(id);
 
         if (notification.getStatus() != NotificationStatus.FAILED) {
@@ -88,6 +97,7 @@ public class NotificationService {
         notification.setStatus(NotificationStatus.PENDING);
         notification.setErrorMessage(null);
         notification.setRetryCount(0);
+
         Notification saved = repository.save(notification);
 
         dispatcher.dispatch(saved);
@@ -96,11 +106,14 @@ public class NotificationService {
     }
 
     public Map<String, Long> getStats() {
+
         Map<String, Long> stats = new LinkedHashMap<>();
+
         stats.put("total", repository.count());
         stats.put("pending", repository.countByStatus(NotificationStatus.PENDING));
         stats.put("sent", repository.countByStatus(NotificationStatus.SENT));
         stats.put("failed", repository.countByStatus(NotificationStatus.FAILED));
+
         return stats;
     }
 }

@@ -1,3 +1,4 @@
+
 services:
   db:
     image: postgres:16
@@ -33,6 +34,7 @@ services:
       TWILIO_SID: ${TWILIO_SID}
       TWILIO_TOKEN: ${TWILIO_TOKEN}
       TWILIO_FROM: ${TWILIO_FROM}
+      JWT_SECRET: ${JWT_SECRET}
 
 volumes:
   pgdata:
