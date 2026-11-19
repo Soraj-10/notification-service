@@ -1,4 +1,3 @@
-
 package com.example.notification.security;
 
 import javax.crypto.SecretKey;
@@ -42,11 +41,13 @@ public class SecurityConfig {
                         // Public authentication endpoints
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Public Swagger documentation endpoints
+                        // Public Swagger and WebSocket endpoints
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/ws/**",
+                                "/ws-test.html"
                         ).permitAll()
 
                         // Admin-only endpoint

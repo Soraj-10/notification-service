@@ -5,6 +5,7 @@ import com.example.notification.dto.NotificationType;
 import com.example.notification.entity.Notification;
 import com.example.notification.repository.NotificationRepository;
 import com.example.notification.service.sender.NotificationSender;
+import com.example.notification.websocket.NotificationWebSocketHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,12 +25,13 @@ class NotificationDispatcherTest {
 
     @Mock NotificationSender emailSender;
     @Mock NotificationRepository repository;
+    @Mock NotificationWebSocketHandler socketHandler;
     NotificationDispatcher dispatcher;
 
     @BeforeEach
     void setUp() {
         when(emailSender.getType()).thenReturn(NotificationType.EMAIL);
-        dispatcher = new NotificationDispatcher(List.of(emailSender), repository);
+        dispatcher = new NotificationDispatcher(List.of(emailSender), repository, socketHandler);
     }
 
     private Notification pending() {
@@ -43,23 +45,21 @@ class NotificationDispatcherTest {
     @Test
     void dispatch_success_marksSent() throws Exception {
         Notification n = pending();
-
         dispatcher.dispatch(n);
-
         assertEquals(NotificationStatus.SENT, n.getStatus());
         verify(repository).save(n);
+        verify(socketHandler).broadcast(n);
     }
 
     @Test
     void dispatch_failure_marksFailedAndCountsRetry() throws Exception {
         Notification n = pending();
         doThrow(new RuntimeException("Authentication failed")).when(emailSender).send(n);
-
         dispatcher.dispatch(n);
-
         assertEquals(NotificationStatus.FAILED, n.getStatus());
         assertEquals(1, n.getRetryCount());
         assertEquals("Authentication failed", n.getErrorMessage());
         verify(repository).save(n);
+        verify(socketHandler).broadcast(n);
     }
 }
