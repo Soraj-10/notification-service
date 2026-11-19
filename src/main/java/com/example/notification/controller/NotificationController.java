@@ -40,16 +40,14 @@ public class NotificationController {
     public Page<Notification> history(
             @RequestParam(required = false) NotificationStatus status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            Authentication auth) {
 
         PageRequest pageable =
                 PageRequest.of(page, size, Sort.by("id").descending());
 
-        if (status == null) {
-            return service.getAll(pageable);
-        }
-
-        return service.getByStatus(status, pageable);
+        return service.getForUser(
+                auth.getName(), isAdmin(auth), status, pageable);
     }
 
     @GetMapping("/stats")
@@ -58,13 +56,26 @@ public class NotificationController {
     }
 
     @GetMapping("/{id}")
-    public Notification getOne(@PathVariable Long id) {
-        return service.getById(id);
+    public Notification getOne(
+            @PathVariable Long id,
+            Authentication auth) {
+
+        return service.getByIdForUser(
+                id, auth.getName(), isAdmin(auth));
     }
 
     @PostMapping("/{id}/resend")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Notification resend(@PathVariable Long id) {
-        return service.resend(id);
+    public Notification resend(
+            @PathVariable Long id,
+            Authentication auth) {
+
+        return service.resendForUser(
+                id, auth.getName(), isAdmin(auth));
+    }
+
+    private boolean isAdmin(Authentication auth) {
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 }
