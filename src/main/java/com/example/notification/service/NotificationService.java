@@ -1,3 +1,4 @@
+
 package com.example.notification.service;
 
 import com.example.notification.dto.NotificationRequest;
@@ -79,9 +80,47 @@ public class NotificationService {
         return repository.findByStatus(status, pageable);
     }
 
+    public Page<Notification> getForUser(
+            String username,
+            boolean admin,
+            NotificationStatus status,
+            Pageable pageable) {
+
+        if (admin) {
+            return status == null
+                    ? repository.findAll(pageable)
+                    : repository.findByStatus(status, pageable);
+        }
+
+        return status == null
+                ? repository.findByCreatedBy(username, pageable)
+                : repository.findByCreatedByAndStatus(
+                username, status, pageable);
+    }
+
     public Notification getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotificationNotFoundException(id));
+    }
+
+    public Notification getByIdForUser(
+            Long id, String username, boolean admin) {
+
+        Notification notification = getById(id);
+
+        if (!admin && !username.equals(notification.getCreatedBy())) {
+            throw new NotificationNotFoundException(id);
+        }
+
+        return notification;
+    }
+
+    public Notification resendForUser(
+            Long id, String username, boolean admin) {
+
+        getByIdForUser(id, username, admin);
+
+        return resend(id);
     }
 
     public Notification resend(Long id) {
