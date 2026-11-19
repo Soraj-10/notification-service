@@ -1,4 +1,3 @@
-
 package com.example.notification.service;
 
 import com.example.notification.dto.NotificationRequest;
@@ -7,7 +6,6 @@ import com.example.notification.dto.NotificationType;
 import com.example.notification.entity.Notification;
 import com.example.notification.exception.NotificationNotFoundException;
 import com.example.notification.repository.NotificationRepository;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,27 +20,22 @@ public class NotificationService {
 
     private static final Pattern EMAIL =
             Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
-
     private static final Pattern PHONE =
             Pattern.compile("^\\+[1-9]\\d{7,14}$");
 
     private final NotificationRepository repository;
     private final NotificationDispatcher dispatcher;
 
-    public NotificationService(
-            NotificationRepository repository,
-            NotificationDispatcher dispatcher) {
-
+    public NotificationService(NotificationRepository repository,
+                               NotificationDispatcher dispatcher) {
         this.repository = repository;
         this.dispatcher = dispatcher;
     }
 
     public Notification create(NotificationRequest request, String username) {
-
         validateRecipient(request.type(), request.recipient());
 
         Notification notification = new Notification();
-
         notification.setType(request.type());
         notification.setRecipient(request.recipient());
         notification.setSubject(request.subject());
@@ -52,19 +45,15 @@ public class NotificationService {
         notification.setCreatedBy(username);
 
         Notification saved = repository.save(notification);
-
         dispatcher.dispatch(saved);
-
         return saved;
     }
 
-    private void validateRecipient(NotificationType type, String to) {
-
-        if (type == NotificationType.EMAIL && !EMAIL.matcher(to).matches()) {
-            throw new IllegalArgumentException("Invalid email address: " + to);
+    private void validateRecipient(NotificationType type, String recipient) {
+        if (type == NotificationType.EMAIL && !EMAIL.matcher(recipient).matches()) {
+            throw new IllegalArgumentException("Invalid email address: " + recipient);
         }
-
-        if (type == NotificationType.SMS && !PHONE.matcher(to).matches()) {
+        if (type == NotificationType.SMS && !PHONE.matcher(recipient).matches()) {
             throw new IllegalArgumentException(
                     "Invalid phone number. Use international format, e.g. +8801XXXXXXXXX");
         }
@@ -74,28 +63,20 @@ public class NotificationService {
         return repository.findAll(pageable);
     }
 
-    public Page<Notification> getByStatus(
-            NotificationStatus status, Pageable pageable) {
-
+    public Page<Notification> getByStatus(NotificationStatus status, Pageable pageable) {
         return repository.findByStatus(status, pageable);
     }
 
-    public Page<Notification> getForUser(
-            String username,
-            boolean admin,
-            NotificationStatus status,
-            Pageable pageable) {
-
+    public Page<Notification> getForUser(String username, boolean admin,
+                                         NotificationStatus status, Pageable pageable) {
         if (admin) {
             return status == null
                     ? repository.findAll(pageable)
                     : repository.findByStatus(status, pageable);
         }
-
         return status == null
                 ? repository.findByCreatedBy(username, pageable)
-                : repository.findByCreatedByAndStatus(
-                username, status, pageable);
+                : repository.findByCreatedByAndStatus(username, status, pageable);
     }
 
     public Notification getById(Long id) {
@@ -103,28 +84,20 @@ public class NotificationService {
                 .orElseThrow(() -> new NotificationNotFoundException(id));
     }
 
-    public Notification getByIdForUser(
-            Long id, String username, boolean admin) {
-
+    public Notification getByIdForUser(Long id, String username, boolean admin) {
         Notification notification = getById(id);
-
         if (!admin && !username.equals(notification.getCreatedBy())) {
             throw new NotificationNotFoundException(id);
         }
-
         return notification;
     }
 
-    public Notification resendForUser(
-            Long id, String username, boolean admin) {
-
+    public Notification resendForUser(Long id, String username, boolean admin) {
         getByIdForUser(id, username, admin);
-
         return resend(id);
     }
 
     public Notification resend(Long id) {
-
         Notification notification = getById(id);
 
         if (notification.getStatus() != NotificationStatus.FAILED) {
@@ -138,21 +111,16 @@ public class NotificationService {
         notification.setRetryCount(0);
 
         Notification saved = repository.save(notification);
-
         dispatcher.dispatch(saved);
-
         return saved;
     }
 
     public Map<String, Long> getStats() {
-
         Map<String, Long> stats = new LinkedHashMap<>();
-
         stats.put("total", repository.count());
         stats.put("pending", repository.countByStatus(NotificationStatus.PENDING));
         stats.put("sent", repository.countByStatus(NotificationStatus.SENT));
         stats.put("failed", repository.countByStatus(NotificationStatus.FAILED));
-
         return stats;
     }
 }

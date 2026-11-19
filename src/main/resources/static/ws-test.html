@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Live Notifications</title></head>
+<body style="font-family:sans-serif;max-width:700px;margin:30px auto">
+<h2>Live notification updates</h2>
+<input id="token" placeholder="Paste JWT token" style="width:100%;padding:8px">
+<br><br>
+<button onclick="connect()">Connect</button>
+<pre id="log" style="background:#111;color:#0f0;padding:10px;min-height:200px"></pre>
+<script>
+    function log(m) { document.getElementById('log').textContent += m + '\n'; }
+    function connect() {
+      const token = document.getElementById('token').value.trim();
+      const ws = new WebSocket('ws://' + location.host + '/ws/notifications?token=' + token);
+      ws.onopen = () => log('Connected');
+      ws.onmessage = e => log('Update: ' + e.data);
+      ws.onclose = () => log('Closed (bad token or server stopped)');
+    }
+</script>
+</body>
+</html>

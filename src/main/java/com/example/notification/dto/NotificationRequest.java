@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 public record NotificationRequest(
         @NotNull NotificationType type,
         @NotBlank String recipient,
-        @NotBlank String subject,
+        String subject,
         @NotBlank String message
 ) {
 }
