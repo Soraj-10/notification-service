@@ -1,3 +1,4 @@
+
 package com.example.notification.entity;
 
 import com.example.notification.dto.NotificationStatus;
@@ -33,6 +34,9 @@ public class Notification {
 
     private LocalDateTime createdAt;
 
+    // Username of the person who created this notification
+    private String createdBy;
+
     public Long getId() { return id; }
 
     public NotificationType getType() { return type; }
@@ -58,4 +62,12 @@ public class Notification {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
 }
