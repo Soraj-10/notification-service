@@ -1,7 +1,10 @@
+
 package com.example.notification.security;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,8 +22,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
-
 @Configuration
 public class SecurityConfig {
 
@@ -32,15 +33,32 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
                 .authorizeHttpRequests(auth -> auth
+
+                        // Public authentication endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // Public Swagger documentation endpoints
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
+                        // Admin-only endpoint
                         .requestMatchers("/api/notifications/stats").hasRole("ADMIN")
+
+                        // All remaining endpoints require authentication
                         .anyRequest().authenticated()
                 )
+
                 .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                        oauth2.jwt(jwt ->
+                                jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
                 );
 
         return http.build();
