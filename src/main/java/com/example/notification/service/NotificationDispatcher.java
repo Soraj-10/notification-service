@@ -1,3 +1,4 @@
+
 package com.example.notification.service;
 
 import com.example.notification.dto.NotificationStatus;
@@ -46,7 +47,7 @@ public class NotificationDispatcher {
             sender.send(notification);
             notification.setStatus(NotificationStatus.SENT);
             log.info(">>> SENT OK");
-        } catch (Throwable e) {
+        } catch (Exception e) {
             log.error(">>> SEND FAILED", e);
             notification.setStatus(NotificationStatus.FAILED);
             notification.setRetryCount(notification.getRetryCount() + 1);

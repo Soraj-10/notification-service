@@ -1,3 +1,4 @@
+
 package com.example.notification.service.sender;
 
 import com.example.notification.dto.NotificationType;
@@ -15,9 +16,6 @@ public class EmailSender implements NotificationSender {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    @Value("${spring.mail.password}")
-    private String mailPassword;
-
     public EmailSender(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
@@ -29,10 +27,6 @@ public class EmailSender implements NotificationSender {
 
     @Override
     public void send(Notification notification) {
-
-        // TEMPORARY CHECK: remove these 2 lines after testing
-        System.out.println(">>> USERNAME USED = " + fromEmail);
-        System.out.println(">>> PASSWORD LENGTH = " + (mailPassword == null ? 0 : mailPassword.length()));
 
         SimpleMailMessage email = new SimpleMailMessage();
 
