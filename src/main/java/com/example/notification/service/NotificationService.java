@@ -1,3 +1,4 @@
+
 package com.example.notification.service;
 
 import com.example.notification.dto.NotificationRequest;
@@ -20,6 +21,7 @@ public class NotificationService {
 
     private static final Pattern EMAIL =
             Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
     private static final Pattern PHONE =
             Pattern.compile("^\\+[1-9]\\d{7,14}$");
 
@@ -53,18 +55,11 @@ public class NotificationService {
         if (type == NotificationType.EMAIL && !EMAIL.matcher(recipient).matches()) {
             throw new IllegalArgumentException("Invalid email address: " + recipient);
         }
+
         if (type == NotificationType.SMS && !PHONE.matcher(recipient).matches()) {
             throw new IllegalArgumentException(
                     "Invalid phone number. Use international format, e.g. +8801XXXXXXXXX");
         }
-    }
-
-    public Page<Notification> getAll(Pageable pageable) {
-        return repository.findAll(pageable);
-    }
-
-    public Page<Notification> getByStatus(NotificationStatus status, Pageable pageable) {
-        return repository.findByStatus(status, pageable);
     }
 
     public Page<Notification> getForUser(String username, boolean admin,
@@ -74,6 +69,7 @@ public class NotificationService {
                     ? repository.findAll(pageable)
                     : repository.findByStatus(status, pageable);
         }
+
         return status == null
                 ? repository.findByCreatedBy(username, pageable)
                 : repository.findByCreatedByAndStatus(username, status, pageable);
@@ -86,9 +82,11 @@ public class NotificationService {
 
     public Notification getByIdForUser(Long id, String username, boolean admin) {
         Notification notification = getById(id);
+
         if (!admin && !username.equals(notification.getCreatedBy())) {
             throw new NotificationNotFoundException(id);
         }
+
         return notification;
     }
 
