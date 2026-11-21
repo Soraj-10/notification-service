@@ -3,6 +3,7 @@ package com.example.notification.controller;
 import com.example.notification.dto.NotificationRequest;
 import com.example.notification.dto.NotificationResponse;
 import com.example.notification.dto.NotificationStatus;
+import com.example.notification.service.NotificationEventService;
 import com.example.notification.service.NotificationService;
 
 import jakarta.validation.Valid;
@@ -11,8 +12,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;
 
@@ -21,9 +24,12 @@ import java.util.Map;
 public class NotificationController {
 
     private final NotificationService service;
+    private final NotificationEventService events;
 
-    public NotificationController(NotificationService service) {
+    public NotificationController(NotificationService service,
+                                  NotificationEventService events) {
         this.service = service;
+        this.events = events;
     }
 
     @PostMapping
@@ -48,6 +54,11 @@ public class NotificationController {
 
         return service.getForUser(auth.getName(), isAdmin(auth), status, pageable)
                 .map(NotificationResponse::from);
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter stream(Authentication auth) {
+        return events.subscribe(auth.getName(), isAdmin(auth));
     }
 
     @GetMapping("/stats")
