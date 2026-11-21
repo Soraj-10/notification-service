@@ -44,7 +44,7 @@ public class NotificationController {
             Authentication auth) {
 
         PageRequest pageable =
-                PageRequest.of(page, size, Sort.by("id").descending());
+                PageRequest.of(page, Math.min(size, 100), Sort.by("id").descending());
 
         return service.getForUser(
                 auth.getName(), isAdmin(auth), status, pageable);
