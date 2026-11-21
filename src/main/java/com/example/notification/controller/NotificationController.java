@@ -1,9 +1,8 @@
-
 package com.example.notification.controller;
 
 import com.example.notification.dto.NotificationRequest;
+import com.example.notification.dto.NotificationResponse;
 import com.example.notification.dto.NotificationStatus;
-import com.example.notification.entity.Notification;
 import com.example.notification.service.NotificationService;
 
 import jakarta.validation.Valid;
@@ -29,15 +28,16 @@ public class NotificationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Notification send(
+    public NotificationResponse send(
             @Valid @RequestBody NotificationRequest request,
             Authentication authentication) {
 
-        return service.create(request, authentication.getName());
+        return NotificationResponse.from(
+                service.create(request, authentication.getName()));
     }
 
     @GetMapping
-    public Page<Notification> history(
+    public Page<NotificationResponse> history(
             @RequestParam(required = false) NotificationStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -46,8 +46,8 @@ public class NotificationController {
         PageRequest pageable =
                 PageRequest.of(page, Math.min(size, 100), Sort.by("id").descending());
 
-        return service.getForUser(
-                auth.getName(), isAdmin(auth), status, pageable);
+        return service.getForUser(auth.getName(), isAdmin(auth), status, pageable)
+                .map(NotificationResponse::from);
     }
 
     @GetMapping("/stats")
@@ -56,22 +56,22 @@ public class NotificationController {
     }
 
     @GetMapping("/{id}")
-    public Notification getOne(
+    public NotificationResponse getOne(
             @PathVariable Long id,
             Authentication auth) {
 
-        return service.getByIdForUser(
-                id, auth.getName(), isAdmin(auth));
+        return NotificationResponse.from(
+                service.getByIdForUser(id, auth.getName(), isAdmin(auth)));
     }
 
     @PostMapping("/{id}/resend")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Notification resend(
+    public NotificationResponse resend(
             @PathVariable Long id,
             Authentication auth) {
 
-        return service.resendForUser(
-                id, auth.getName(), isAdmin(auth));
+        return NotificationResponse.from(
+                service.resendForUser(id, auth.getName(), isAdmin(auth)));
     }
 
     private boolean isAdmin(Authentication auth) {
