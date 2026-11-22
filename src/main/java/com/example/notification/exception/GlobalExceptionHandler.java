@@ -1,4 +1,3 @@
-
 package com.example.notification.exception;
 
 import org.slf4j.Logger;
@@ -7,10 +6,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -81,6 +82,15 @@ public class GlobalExceptionHandler {
     // Catch-all handler
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> other(Exception ex) {
+
+        // Keep the status Spring already chose (409, 401, 404, 405 ...)
+        if (ex instanceof ErrorResponse errorResponse) {
+            HttpStatus status = HttpStatus.valueOf(errorResponse.getStatusCode().value());
+            String message = (ex instanceof ResponseStatusException rse && rse.getReason() != null)
+                    ? rse.getReason()
+                    : status.getReasonPhrase();
+            return build(status, message, null);
+        }
 
         log.error(">>> Unhandled exception", ex);
 
